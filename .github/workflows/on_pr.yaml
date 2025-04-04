@@ -1,0 +1,39 @@
+name: on-pr
+run-name: Pull Request checks
+on:
+  pull_request:
+    branches: [main, hml]
+
+jobs:
+  quality_check:
+    name: Quality check
+    uses: Ploomes/DevOpsAtelier/.github/workflows/dotnet-quality.yaml@main
+    with:
+      dotnet-version: 6
+      github-nuget-user: ${{ vars.GH_NUGET_USER }}
+    secrets:
+      github-nuget-password: ${{ secrets.GH_NUGET_TOKEN }}
+  versioning:
+    name: Short SHA versioning
+    runs-on: ubuntu-latest
+    outputs:
+      new-version-tag: ${{ steps.get-new-version-tag.outputs.SHORT_GITHUB_SHA }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+      - name: Get Short GitHub SHA and Save in Environment Variable
+        id: get-new-version-tag
+        run: echo "SHORT_GITHUB_SHA=${{github.event.pull_request.head.sha}}" >> "${GITHUB_OUTPUT}"
+  dockerize:
+    name: Dockerize to Azure ACR
+    needs: [versioning]
+    uses: Ploomes/DevOpsAtelier/.github/workflows/dockerize-azure.yaml@main
+    with:
+      github-nuget-user: ${{ vars.GH_NUGET_USER }}
+      azure-acr-user: ${{ vars.ACR_USER }}
+      docker-image-name: ${{ vars.DOCKER_IMAGE_NAME }}
+      docker-image-tag: ${{ needs.versioning.outputs.new-version-tag }}
+      dockerfile: ./cb2queue.Dockerfile
+    secrets:
+      github-nuget-password: ${{ secrets.GH_NUGET_TOKEN }}
+      azure-acr-password: ${{ secrets.ACR_PASSWORD }}

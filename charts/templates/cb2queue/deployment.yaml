@@ -1,0 +1,55 @@
+{{- $chartName := .Chart.Name }}
+{{- $releaseName := .Release.Name }}
+{{- $values := .Values }}
+{{- $version := .Values.version }}
+{{- range $k, $v := $.Values.integrations }}
+{{- if $v.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{- (printf "%s-%s" $releaseName .integrationKey) | trunc 63 | trimSuffix "-" }}"
+  labels:
+    app.kubernetes.io/name: "{{- (printf "%s" .integrationKey) | trunc 63 | trimSuffix "-" }}"
+    app.kubernetes.io/instance: {{ $releaseName }}
+    {{- include "deploy.label.common" $ | nindent 4 }}
+spec:
+  replicas: {{ $v.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "{{- (printf "%s" .integrationKey) | trunc 63 | trimSuffix "-" }}"
+      app.kubernetes.io/instance: {{ $releaseName }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "{{- (printf "%s" .integrationKey) | trunc 63 | trimSuffix "-" }}"
+        app.kubernetes.io/instance: {{ $releaseName }}
+    spec:
+      {{- with $values.shared.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ $chartName }}
+          {{- if $v.version }}
+          image: "ploomes.azurecr.io/ploomes/ploomescrmerpkafkaconsumer:{{ $v.version }}"
+          {{- else }}
+          image: "ploomes.azurecr.io/ploomes/ploomescrmerpkafkaconsumer:{{ $version }}"
+          {{- end }}
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {{- toYaml $v.resources | nindent 12 }}
+          volumeMounts:
+            - name: secrets
+              mountPath: "/secrets"
+              readOnly: true
+      volumes:
+        - name: secrets
+          secret:
+            secretName: "{{- (printf "%s-%s" $releaseName .integrationKey) | trunc 63 | trimSuffix "-" }}"
+---
+{{- end }}
+{{- end }}

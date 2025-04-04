@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ploomescrmerpkafkaconsumer
+description: queueconsumer for ploomescrmcallbackhub2
+type: application
+version: 2.3.0
+appVersion: "1.0.0"

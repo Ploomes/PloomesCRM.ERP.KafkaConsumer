@@ -1,0 +1,52 @@
+name: cicd-prd
+run-name: CICD PRD
+on:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Code quality check
+    uses: Ploomes/DevOpsAtelier/.github/workflows/dotnet-quality.yaml@main
+    with:
+      dotnet-version: 6
+      github-nuget-user: ${{ vars.GH_NUGET_USER }}
+    secrets:
+      github-nuget-password: ${{ secrets.GH_NUGET_TOKEN }}
+  versioning:
+    name: Tag versioning
+    uses: Ploomes/DevOpsAtelier/.github/workflows/simple-versioning.yaml@main
+    needs: [quality]
+    with:
+      suffix: -prd
+      devops-github-user: ${{ vars.GH_DEVOPS_USER }}
+    secrets:
+      devops-github-token: ${{ secrets.GH_DEVOPS_TOKEN }}
+  dockerize:
+    name: Dockerize to Azure ACR
+    needs: [versioning]
+    uses: Ploomes/DevOpsAtelier/.github/workflows/dockerize-azure.yaml@main
+    with:
+      github-nuget-user: ${{ vars.GH_NUGET_USER }}
+      azure-acr-user: ${{ vars.ACR_USER }}
+      docker-image-name: ${{ vars.DOCKER_IMAGE_NAME }}
+      docker-image-tag: ${{ needs.versioning.outputs.new-version-tag }}
+      dockerfile: ./cb2queue.Dockerfile
+    secrets:
+      github-nuget-password: ${{ secrets.GH_NUGET_TOKEN }}
+      azure-acr-password: ${{ secrets.ACR_PASSWORD }}
+  deploy:
+    name: Deploy to prd enviroment
+    needs: [versioning, dockerize]
+    uses: Ploomes/DevOpsAtelier/.github/workflows/dotnet-k8s-deploy-with-helm-to-azure-aks.yaml@main
+    with:
+      environment: prdBr
+      keyvault-name: ${{ vars.KV_NAME_PRD }}
+      keyvault-helm-value-secret-name: ${{ vars.KV_SECRET_NAME_HELM_VALUES_PRD }}
+      k8s-namespace: ${{ vars.K8S_NAMESPACE_PRD }}
+      helm-release-name: ${{ vars.HELM_RELEASE_NAME }}
+      extra-helm-upgrade-args: --set version=${{ needs.versioning.outputs.new-version-tag }}
+      rr-entire-namespace: false
+    secrets:
+      az-credential: ${{ secrets.AZ_CREDENTIAL }}
+      devops-github-token: ${{ secrets.GH_DEVOPS_TOKEN }}

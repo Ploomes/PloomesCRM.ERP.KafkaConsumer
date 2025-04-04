@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<UserSecretsId>6d81fb2e-07c8-4f49-9f04-02d7b5e8b2eb</UserSecretsId>
+
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="Confluent.Kafka" Version="2.1.0" />
+		<PackageReference Include="Confluent.Kafka.DependencyInjection" Version="3.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.17" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.4.27" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="SendGrid" Version="9.28.1" />
+		<PackageReference Include="StackExchange.Redis" Version="2.6.111" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Compile Remove="Business\RabbitMqConsumer.cs" />
+	  <Compile Remove="Business\IntegrationsQueueData.cs" />
+	</ItemGroup>
+	
+	<ProjectExtensions><VisualStudio><UserProperties properties_4launchsettings_1json__JsonSchema="ssl" /></VisualStudio></ProjectExtensions>
+
+</Project>

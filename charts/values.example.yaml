@@ -1,0 +1,48 @@
+shared:
+  nodeSelector:
+    kubernetes.io/os: linux
+    type: Integrations
+  appsettings:
+    centralapi:
+      url: "https://centralapi.com"
+      key: "key"
+    serviceapi:
+      url: ""
+      key: ""
+    neppo:
+      semaphoreretrydelayseconds: 5
+    datadog:
+      service: "erp-kafkaconsumer"
+      tags: "env:dev,environment:local"
+      apikey: "DD-API-KEY"
+      apivalue: ""
+      appkey: "DD-APPLICATION-KEY"
+      appvalue: ""
+      url: ""
+      clustername: ""
+    connectionstrings:
+      redis: ""
+      sqlserver: ""
+      kafka: ""
+    kv:
+      tenantid: "tenantid"
+      clientid: "clientid"
+      clientsecret: "clientsecret"
+      uri: "https://uri.com"
+      keyuri: "https://keyuri.com"
+    sendgrid:
+      apikey: ""
+
+integrations:
+  - integrationKey: omie
+    enabled: true
+    version:
+    resources:
+      limits:
+        cpu: 250m
+        memory: 3000Mi
+      requests:
+        cpu: 50m
+        memory: 150Mi
+    appsettings:
+      kafkaConsumerTopic: omieTopic

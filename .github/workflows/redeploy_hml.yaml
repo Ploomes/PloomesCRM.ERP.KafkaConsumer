@@ -1,0 +1,36 @@
+name: redeploy-hml
+run-name: Redeploy latest tag HML
+on: [workflow_dispatch]
+
+jobs:
+  get_latest_tag:
+    name: Get latest version tag
+    runs-on: ubuntu-latest
+    outputs:
+      latest-tag: ${{ steps.get_latest_tag.outputs.version-tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+      - name: Get latest tag
+        id: get_latest_tag
+        uses: Ploomes/DevOpsAtelier/actions/simple-versioning/get-latest-tag@main
+        with:
+          suffix: -hml
+  redeploy:
+    name: Redeploy to HML enviroment
+    needs: [get_latest_tag]
+    uses: Ploomes/DevOpsAtelier/.github/workflows/dotnet-k8s-deploy-with-helm-to-azure-aks.yaml@main
+    with:
+      environment: hml
+      keyvault-name: ${{ vars.KV_NAME_HML }}
+      keyvault-helm-value-secret-name: ${{ vars.KV_SECRET_NAME_HELM_VALUES_HML }}
+      k8s-namespace: ${{ vars.K8S_NAMESPACE_HML }}
+      helm-release-name: ${{ vars.HELM_RELEASE_NAME }}
+      extra-helm-upgrade-args: --set version=${{ needs.get_latest_tag.outputs.latest-tag }}
+      rr-entire-namespace: false
+    secrets:
+      az-credential: ${{ secrets.AZ_CREDENTIAL_HML }}
+      devops-github-token: ${{ secrets.GH_DEVOPS_TOKEN }}

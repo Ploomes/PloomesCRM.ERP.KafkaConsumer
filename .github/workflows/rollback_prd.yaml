@@ -1,0 +1,28 @@
+name: rollback-prd
+run-name: Rollback PRD
+on: [workflow_dispatch]
+
+jobs:
+  rollback_versioning:
+    name: Rollback tag versioning
+    uses: Ploomes/DevOpsAtelier/.github/workflows/rollback-simple-versioning.yaml@main
+    with:
+      suffix: -prd
+      devops-github-user: ${{ vars.GH_DEVOPS_USER }}
+    secrets:
+      devops-github-token: ${{ secrets.GH_DEVOPS_TOKEN }}
+  rollback:
+    name: Rollback to PRD enviroment
+    needs: [rollback_versioning]
+    uses: Ploomes/DevOpsAtelier/.github/workflows/dotnet-k8s-deploy-with-helm-to-azure-aks-with-deployment.yaml@main
+    with:
+      environment: prdBr
+      keyvault-name: ${{ vars.KV_NAME_PRD }}
+      keyvault-helm-value-secret-name: ${{ vars.KV_SECRET_NAME_HELM_VALUES_PRD }}
+      k8s-namespace: ${{ vars.K8S_NAMESPACE_PRD }}
+      helm-release-name: ${{ vars.HELM_RELEASE_NAME }}
+      extra-helm-upgrade-args: --set version=${{ needs.rollback_versioning.outputs.last-active-version-tag }}
+      rr-entire-namespace: false
+    secrets:
+      az-credential: ${{ secrets.AZ_CREDENTIAL }}
+      devops-github-token: ${{ secrets.GH_DEVOPS_TOKEN }}
