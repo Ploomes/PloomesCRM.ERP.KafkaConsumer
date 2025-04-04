@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Threading;
 using Newtonsoft.Json;
+using PloomesCRM.ERP.KafkaConsumer.Business;
 using PloomesCRMCallbackHub2.Queue.DLL.BasicCommon;
 using PloomesCRMCallbackHub2.Queue.DLL.BasicHelpers;
 using PloomesCRMCallbackHub2.Queue.DLL.Entities;
@@ -253,9 +254,9 @@ public class KafkaConsumer : BackgroundService
 
                 try
                 {
-                    if (_objeToBeSentLater.Count < 80 || _counterOfObjects < 200 || (DateTime.UtcNow - _lastInteraction).Seconds < 30)
+                    if (_objeToBeSentLater.Count < ConsumerConstParameters.ObjToBeSentLaterLimit || _counterOfObjects < ConsumerConstParameters.MessagesLimitOnMemory)
                     {
-                        var consumeResult = consumer.Consume(150);
+                        var consumeResult = consumer.Consume(ConsumerConstParameters.MessageConsumeOnRound);
                         _lastInteraction = DateTime.UtcNow;
                         var genericObject = consumeResult?.Message is null ? null : JsonConvert.DeserializeObject<GenericIntegrationObject>(consumeResult.Message.Value);
                         if (genericObject is not null)
