@@ -2,7 +2,7 @@
 
 namespace PloomesCRM.ERP.KafkaConsumer.Business
 {
-    public static class ConsumerParameters
+    public static class ConsumerConstParameters
     {
         public static readonly int MessageConsumeOnRound = 150;
 
